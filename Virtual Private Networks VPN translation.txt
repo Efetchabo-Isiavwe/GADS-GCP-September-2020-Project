@@ -1,0 +1,62 @@
+Task 2: Create the VPN gateways and tunnels
+
+
+Create the vpn-1 gateway and tunnel1to2
+
+
+gcloud compute --project "qwiklabs-gcp-00-a7a4193d33f0" target-vpn-gateways create "vpn-1" --region "us-central1" --network "vpn-network-1"
+
+gcloud compute --project "qwiklabs-gcp-00-a7a4193d33f0" forwarding-rules create "vpn-1-rule-esp" --region "us-central1" --address "35.184.141.17" --ip-protocol "ESP" --target-vpn-gateway "vpn-1"
+
+gcloud compute --project "qwiklabs-gcp-00-a7a4193d33f0" forwarding-rules create "vpn-1-rule-udp500" --region "us-central1" --address "35.184.141.17" --ip-protocol "UDP" --ports "500" --target-vpn-gateway "vpn-1"
+
+gcloud compute --project "qwiklabs-gcp-00-a7a4193d33f0" forwarding-rules create "vpn-1-rule-udp4500" --region "us-central1" --address "35.184.141.17" --ip-protocol "UDP" --ports "4500" --target-vpn-gateway "vpn-1"
+
+gcloud compute --project "qwiklabs-gcp-00-a7a4193d33f0" vpn-tunnels create "tunnel1to2" --region "us-central1" --peer-address "34.78.18.50" --shared-secret "gcprocks" --ike-version "2" --local-traffic-selector "0.0.0.0/0" --target-vpn-gateway "vpn-1"
+
+gcloud compute --project "qwiklabs-gcp-00-a7a4193d33f0" routes create "tunnel1to2-route-1" --network "vpn-network-1" --next-hop-vpn-tunnel "tunnel1to2" --next-hop-vpn-tunnel-region "us-central1" --destination-range "10.1.3.0/24"
+
+
+Create the vpn-2 gateway and tunnel2to1
+
+
+gcloud compute --project "qwiklabs-gcp-00-a7a4193d33f0" target-vpn-gateways create "vpn-2" --region "europe-west1" --network "vpn-network-2"
+
+gcloud compute --project "qwiklabs-gcp-00-a7a4193d33f0" forwarding-rules create "vpn-2-rule-esp" --region "europe-west1" --address "34.78.18.50" --ip-protocol "ESP" --target-vpn-gateway "vpn-2"
+
+gcloud compute --project "qwiklabs-gcp-00-a7a4193d33f0" forwarding-rules create "vpn-2-rule-udp500" --region "europe-west1" --address "34.78.18.50" --ip-protocol "UDP" --ports "500" --target-vpn-gateway "vpn-2"
+
+gcloud compute --project "qwiklabs-gcp-00-a7a4193d33f0" forwarding-rules create "vpn-2-rule-udp4500" --region "europe-west1" --address "34.78.18.50" --ip-protocol "UDP" --ports "4500" --target-vpn-gateway "vpn-2"
+
+gcloud compute --project "qwiklabs-gcp-00-a7a4193d33f0" vpn-tunnels create "tunnel2to1" --region "europe-west1" --peer-address "35.184.141.17" --shared-secret "gcprocks" --ike-version "2" --local-traffic-selector "0.0.0.0/0" --target-vpn-gateway "vpn-2"
+
+gcloud compute --project "qwiklabs-gcp-00-a7a4193d33f0" routes create "tunnel2to1-route-1" --network "vpn-network-2" --next-hop-vpn-tunnel "tunnel2to1" --next-hop-vpn-tunnel-region "europe-west1" --destination-range "10.5.4.0/24"
+
+
+Verify server-1 to server-2 connectivity
+
+student-00-639bd9b418eb@server-1:~$ ping -c 3 10.1.3.2
+PING 10.1.3.2 (10.1.3.2) 56(84) bytes of data.
+64 bytes from 10.1.3.2: icmp_seq=1 ttl=62 time=108 ms
+64 bytes from 10.1.3.2: icmp_seq=2 ttl=62 time=105 ms
+64 bytes from 10.1.3.2: icmp_seq=3 ttl=62 time=105 ms
+
+--- 10.1.3.2 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2002ms
+rtt min/avg/max/mdev = 105.809/106.872/108.845/1.446 ms
+student-00-639bd9b418eb@server-1:~$ 
+
+
+To test connectivity to server-1's internal IP address
+
+student-00-639bd9b418eb@server-2:~$ ping -c 3 10.5.4.2
+PING 10.5.4.2 (10.5.4.2) 56(84) bytes of data.
+64 bytes from 10.5.4.2: icmp_seq=1 ttl=62 time=108 ms
+64 bytes from 10.5.4.2: icmp_seq=2 ttl=62 time=105 ms
+64 bytes from 10.5.4.2: icmp_seq=3 ttl=62 time=106 ms
+
+--- 10.5.4.2 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2003ms
+rtt min/avg/max/mdev = 105.851/106.855/108.715/1.343 ms
+student-00-639bd9b418eb@server-2:~$ 
+
